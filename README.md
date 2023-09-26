@@ -4,4 +4,4 @@
 
 - [Практическая 1](https://github.com/SanyaPilot/CFUVContest/tree/master/contest1)
 
-
+- [Практическая 2](https://github.com/SanyaPilot/CFUVContest/tree/master/contest2)
