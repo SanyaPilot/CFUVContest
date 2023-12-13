@@ -78,6 +78,12 @@
 
 | [Контест 8](https://contest.yandex.ru/contest/57296/problems/) |                    |
 | -------------------------------------------------------------- |:------------------:|
-| [1. 1D массив + функции](./contest_08/01/main.cpp)             | ![](./img/cpp.png) |
-| [2. Адаптер функций](./contest_08/02/main.cpp)                 | ![](./img/cpp.png) |
-| [3. Стратегия печати](./contest_08/03/main.cpp)                | ![](./img/cpp.png) |
+| [1. Никаких секретов](./contest_08/01/main.cpp)                | ![](./img/cpp.png) |
+| [2. Уроборос](./contest_08/02/main.cpp)                        | ![](./img/cpp.png) |
+| [3. 1D массив + функции](./contest_08/03/main.cpp)             | ![](./img/cpp.png) |
+| [4. 2D массив + функции](./contest_08/04/main.cpp)             | ![](./img/cpp.png) |
+| [5. IntSharedPointer](./contest_08/05/main.cpp)                | ![](./img/cpp.png) |
+| [6. Класс Any](./contest_08/06/main.cpp)                       | ![](./img/cpp.png) |
+| [7. Адаптер функций](./contest_08/07/main.cpp)                 | ![](./img/cpp.png) |
+| [8. Стратегия печати](./contest_08/08/main.cpp)                | ![](./img/cpp.png) |
+| [9. Композит](./contest_08/09/main.cpp)                        | ![](./img/cpp.png) |
