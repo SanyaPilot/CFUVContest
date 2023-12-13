@@ -1,161 +1,126 @@
 #include <iostream>
-#include <string>
-#include <vector>
+#include <tuple>
 
-class Any{
-    enum class Type{
-        INT,
-        DOUBLE,
-        STRING,
-        VECTOR_ANY_PTR
-    };
-
-    void* data;
-    Type type;
-
-public:
-    Any(int* data);
-    Any(double* data);
-    Any(std::string* data);
-    Any(std::vector<Any*>* data);
-    ~Any();
-    
-    operator int();
-    operator double();
-    operator std::string();
-    operator std::vector<Any*>*();
-
-    friend std::ostream& operator<<(std::ostream& out, const Any& val);
-};
-
-std::ostream& operator<<(std::ostream& out, const Any& o);
+int** new_matrix(int rows, int cols, int value=0);
+std::tuple<int**, int, int> convolution(int** matrix, int mrows, int mcols, int** core, int crows=3, int ccols=3);
+std::tuple<int**, int, int> multiplication(int** a, int arows, int acols, int** b, int brows, int bcols);
+std::tuple<int, int> add_row(int*** matrix, int rows, int cols, int value=1);
+std::tuple<int, int> add_col(int*** matrix, int rows, int cols, int value=1);
+void delete_matrix(int*** matrix, int rows);
+void print(int** matrix, int rows, int cols);
 
 int main(){
-    Any data(new std::vector<Any*>());
-    
-    std::vector<Any*>* array = (std::vector<Any*>*)data;
-    
-    int ints_count;
-    std::cin >> ints_count;
-    for(int i=0; i<ints_count; i++){
-        int value;
-        std::cin >> value;
-        Any* temp = new Any(new int(value));
-        array->push_back(temp);
-    }
-    
-    int doubles_count;
-    std::cin >> doubles_count;
-    for(int i=0; i<doubles_count; i++){
-        double value;
-        std::cin >> value;
-        Any* temp = new Any(new double(value));
-        array->push_back(temp);
-    }
+    int rows_first, cols_first, first_init_val,
+        rows_core, cols_core;
+        
+    std::cin >> rows_first >> cols_first >> first_init_val;
+    int** first = new_matrix(rows_first, cols_first, first_init_val);
+    for(int i=0; i < rows_first; i++)
+        for(int j=0; j < cols_first; j++)
+            std::cin >> first[i][j];
 
-    int strings_count;
-    std::cin >> strings_count;
-    for(int i=0; i<strings_count; i++){
-        std::string value;
-        std::cin >> value;
-        Any* temp = new Any(new std::string(value));
-        array->push_back(temp);
-    }
+    std::cin >> rows_core >> cols_core;
+    int** core = new_matrix(rows_core, cols_core);
+    for(int i=0; i < rows_core; i++)
+        for(int j=0; j < cols_core; j++)
+            std::cin >> core[i][j];
     
-    int i = 0; double d = 0; std::string s = "";
-    for(auto value: *array){
-        try{ i += (int)(*value); }
-        catch(...){ }
-        
-        try{ d += (double)(*value); }
-        catch(...){ }
-        
-        try{ s += (std::string)(*value); }
-        catch(...){ }
-    }
+    auto [conv, rows_conv, cols_conv] = convolution(first, rows_first, cols_first, core);
     
-    Any ai(new int(i));
-    Any ad(new double(d));
-    Any as(new std::string(s));
+    std::tie(rows_conv, cols_conv) = add_row(&conv, rows_conv, cols_conv);
+    std::tie(rows_conv, cols_conv) = add_col(&conv, rows_conv, cols_conv);
+    std::tie(rows_conv, cols_conv) = add_col(&conv, rows_conv, cols_conv);
     
-    std::cout << data << "\n" << ai << ' ' << ad <<  ' ' << as;
+    auto [mult, rows_mult, cols_mult] = multiplication(conv, rows_conv, cols_conv, first, rows_first, cols_first);
+    
+    print(mult, rows_mult, cols_mult);
+    
+    delete_matrix(&first, rows_first);
+    delete_matrix(&conv, rows_conv);
+    delete_matrix(&mult, rows_mult);
 }
 
 // Начало вставленного кода
-Any::Any(int* data) {
-    this->data = data;
-    this->type = Type::INT;
-}
-Any::Any(double* data) {
-    this->data = data;
-    this->type = Type::DOUBLE;
-}
-Any::Any(std::string* data) {
-    this->data = data;
-    this->type = Type::STRING;
-}
-Any::Any(std::vector<Any*>* data) {
-    this->data = data;
-    this->type = Type::VECTOR_ANY_PTR;
-}
-Any::~Any() {
-    if (type == Type::VECTOR_ANY_PTR) {
-        auto realPtr = static_cast<std::vector<Any*>*>(data);
-        for (auto &it : *realPtr) {
-            delete it;
+int** new_matrix(int rows, int cols, int value) {
+    int** matrix = new int*[rows];
+    for (int i = 0; i < rows; i++) {
+        matrix[i] = new int[cols];
+        for (int j = 0; j < cols; j++) {
+            matrix[i][j] = value;
         }
-        delete realPtr;
-    } else if (type == Type::INT) {
-        int* realPtr = static_cast<int*>(data);
-        delete realPtr;
-    } else if (type == Type::DOUBLE) {
-        double* realPtr = static_cast<double*>(data);
-        delete realPtr;
-    } else if (type == Type::STRING) {
-        std::string* realPtr = static_cast<std::string*>(data);
-        delete realPtr;
     }
+    return matrix;
 }
-Any::operator int() {
-    if (type != Type::INT) {
-        throw "";
-    }
-    return *static_cast<int*>(data);
-}
-Any::operator double() {
-    if (type != Type::DOUBLE) {
-        throw "";
-    }
-    return *static_cast<double*>(data);
-}
-Any::operator std::string() {
-    if (type != Type::STRING) {
-        throw "";
-    }
-    return *static_cast<std::string*>(data);
-}
-Any::operator std::vector<Any*>*() {
-    if (type != Type::VECTOR_ANY_PTR) {
-        throw "";
-    }
-    return static_cast<std::vector<Any*>*>(data);
-}
-std::ostream& operator<<(std::ostream& out, const Any& val) {
-    if (val.type == Any::Type::VECTOR_ANY_PTR) {
-        auto realPtr = static_cast<std::vector<Any*>*>(val.data);
-        for (auto &it : *realPtr) {
-            out << *it << " ";
+std::tuple<int**, int, int> convolution(int** matrix, int mrows, int mcols, int** core, int crows, int ccols) {
+    int new_rows = mrows - crows + 1;
+    int new_cols = mcols - ccols + 1;
+    int** res = new_matrix(new_rows, new_cols);
+
+    // Move core start pos
+    for (int y1 = 0; y1 < new_rows; y1++) {
+        for (int x1 = 0; x1 < new_cols; x1++) {
+            int cur_sum = 0;
+            // Move inside current core place
+            for (int y2 = 0; y2 < crows; y2++) {
+                for (int x2 = 0; x2 < ccols; x2++) {
+                    cur_sum += matrix[y1 + y2][x1 + x2] * core[y2][x2];
+                }
+            }
+            res[y1][x1] = cur_sum;
         }
-    } else if (val.type == Any::Type::INT) {
-        int* realPtr = static_cast<int*>(val.data);
-        out << *realPtr;
-    } else if (val.type == Any::Type::DOUBLE) {
-        double* realPtr = static_cast<double*>(val.data);
-        out << *realPtr;
-    } else if (val.type == Any::Type::STRING) {
-        std::string* realPtr = static_cast<std::string*>(val.data);
-        out << *realPtr;
     }
-    return out;
+    return std::make_tuple(res, new_rows, new_cols);
+}
+std::tuple<int**, int, int> multiplication(int** a, int arows, int acols, int** b, int brows, int bcols) {
+    int new_rows = arows;
+    int new_cols = bcols;
+    int **res = new_matrix(new_rows, new_cols);
+
+    for (int i = 0; i < new_rows; i++) {
+        for (int j = 0; j < new_cols; j++) {
+            for (int k = 0; k < brows; k++) {
+                res[i][j] += a[i][k] * b[k][j];
+            }
+        }
+    }
+    return std::make_tuple(res, new_rows, new_cols);
+}
+std::tuple<int, int> add_row(int*** matrix, int rows, int cols, int value) {
+    int** res = new_matrix(rows + 1, cols, value);
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            res[i][j] = (*matrix)[i][j];
+        }
+    }
+    delete_matrix(matrix, rows);
+    *matrix = res;
+    return std::make_tuple(rows + 1, cols);
+}
+std::tuple<int, int> add_col(int*** matrix, int rows, int cols, int value) {
+    int** res = new_matrix(rows, cols + 1, value);
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            res[i][j] = (*matrix)[i][j];
+        }
+    }
+    delete_matrix(matrix, rows);
+    *matrix = res;
+    return std::make_tuple(rows, cols + 1);
+}
+void delete_matrix(int*** matrix, int rows) {
+    for (int i = 0; i < rows; i++) {
+        delete[] (*matrix)[i];
+    }
+    delete[] *matrix;
+    *matrix = nullptr;
+}
+void print(int** matrix, int rows, int cols) {
+    std::cout << "\n\n";
+    for(int i=0; i < rows; i++) {
+        for(int j=0; j < cols; j++) {
+            std::cout << matrix[i][j] << " ";
+        }
+        std::cout << "\n";
+    }
 }
 // Конец вставленного кода

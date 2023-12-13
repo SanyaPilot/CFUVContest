@@ -1,118 +1,161 @@
 #include <iostream>
 #include <string>
+#include <vector>
 
-class Document{
-    std::string data;
+class Any{
+    enum class Type{
+        INT,
+        DOUBLE,
+        STRING,
+        VECTOR_ANY_PTR
+    };
+
+    void* data;
+    Type type;
+
 public:
-    Document(std::string data):data(data){
-    }
-
-    const std::string& get() const{
-        return data;
-    }
-};
-
-class PrintStrategy {
-public:
-    virtual void print(const Document& document) = 0;
-};
-
-
-class Printer {
-    PrintStrategy* strategy;
+    Any(int* data);
+    Any(double* data);
+    Any(std::string* data);
+    Any(std::vector<Any*>* data);
+    ~Any();
     
-public:
-    Printer(PrintStrategy* strategy):strategy(strategy){
-    }
+    operator int();
+    operator double();
+    operator std::string();
+    operator std::vector<Any*>*();
 
-    void setStrategy(PrintStrategy* strategy) {
-        delete this->strategy;
-        this->strategy = strategy;
-    }
-    
-    void print(const Document& doc) {
-        if (strategy == nullptr) exit(1);
-        
-        strategy->print(doc);
-    }
-    
-    ~Printer(){
-        delete strategy;
-    }
+    friend std::ostream& operator<<(std::ostream& out, const Any& val);
 };
 
-// Начало вставленного кода
-class ScreenPrintStrategy : public PrintStrategy {
-public:
-    void print(const Document& document) override {
-        std::cout << document.get() << "\n";
-    }
-};
-
-class StringPrintStrategy : public PrintStrategy {
-private:
-    std::string buff;
-    int count;
-public:
-    StringPrintStrategy() {
-        count = 1;
-    }
-    void print(const Document& document) override {
-        buff += "--- doc " + std::to_string(count) + " ---\n";
-        buff += document.get();
-        buff += "\n";
-        count++;
-    }
-    std::string getPrintedDocuments() {
-        return buff;
-    }
-};
-
-class MockPrintStrategy : public PrintStrategy {
-private:
-    int count;
-public:
-    MockPrintStrategy() {
-        count = 0;
-    }
-    void print(const Document& document) override {
-        count++;
-    }
-    int getPrintedDocumentsCount() {
-        return count;
-    }
-};
-// Конец вставленного кода
+std::ostream& operator<<(std::ostream& out, const Any& o);
 
 int main(){
-    Printer printer(new ScreenPrintStrategy());
+    Any data(new std::vector<Any*>());
+    
+    std::vector<Any*>* array = (std::vector<Any*>*)data;
+    
+    int ints_count;
+    std::cin >> ints_count;
+    for(int i=0; i<ints_count; i++){
+        int value;
+        std::cin >> value;
+        Any* temp = new Any(new int(value));
+        array->push_back(temp);
+    }
+    
+    int doubles_count;
+    std::cin >> doubles_count;
+    for(int i=0; i<doubles_count; i++){
+        double value;
+        std::cin >> value;
+        Any* temp = new Any(new double(value));
+        array->push_back(temp);
+    }
 
-    int count;
-    std::cin >> count; std::cin.ignore(1);
-    while(count--){
-        std::string data;
-        std::getline(std::cin, data);
-        printer.print(Document(data)); // Печать документа на экран
+    int strings_count;
+    std::cin >> strings_count;
+    for(int i=0; i<strings_count; i++){
+        std::string value;
+        std::cin >> value;
+        Any* temp = new Any(new std::string(value));
+        array->push_back(temp);
     }
     
-    StringPrintStrategy* stringStrategy = new StringPrintStrategy();
-    printer.setStrategy(stringStrategy);
-    std::cin >> count; std::cin.ignore(1);
-    while(count--){
-        std::string data;
-        std::getline(std::cin, data);
-        printer.print(Document(data)); // Печать документа в строку
+    int i = 0; double d = 0; std::string s = "";
+    for(auto value: *array){
+        try{ i += (int)(*value); }
+        catch(...){ }
+        
+        try{ d += (double)(*value); }
+        catch(...){ }
+        
+        try{ s += (std::string)(*value); }
+        catch(...){ }
     }
-    std::cout << stringStrategy->getPrintedDocuments() << std::endl;
     
+    Any ai(new int(i));
+    Any ad(new double(d));
+    Any as(new std::string(s));
     
-    MockPrintStrategy* mockStrategy = new MockPrintStrategy();
-    printer.setStrategy(mockStrategy);
-    std::cin >> count; std::cin.ignore(1);
-    while(count--){
-        std::string data;
-        std::getline(std::cin, data);
-        printer.print(Document(data)); // Имитация печати, на самом деле просто подсчёт
-    }
-    std::cout << mockStrategy->getPrintedDocumentsCount() << std::endl;
+    std::cout << data << "\n" << ai << ' ' << ad <<  ' ' << as;
 }
+
+// Начало вставленного кода
+Any::Any(int* data) {
+    this->data = data;
+    this->type = Type::INT;
+}
+Any::Any(double* data) {
+    this->data = data;
+    this->type = Type::DOUBLE;
+}
+Any::Any(std::string* data) {
+    this->data = data;
+    this->type = Type::STRING;
+}
+Any::Any(std::vector<Any*>* data) {
+    this->data = data;
+    this->type = Type::VECTOR_ANY_PTR;
+}
+Any::~Any() {
+    if (type == Type::VECTOR_ANY_PTR) {
+        auto realPtr = static_cast<std::vector<Any*>*>(data);
+        for (auto &it : *realPtr) {
+            delete it;
+        }
+        delete realPtr;
+    } else if (type == Type::INT) {
+        int* realPtr = static_cast<int*>(data);
+        delete realPtr;
+    } else if (type == Type::DOUBLE) {
+        double* realPtr = static_cast<double*>(data);
+        delete realPtr;
+    } else if (type == Type::STRING) {
+        std::string* realPtr = static_cast<std::string*>(data);
+        delete realPtr;
+    }
+}
+Any::operator int() {
+    if (type != Type::INT) {
+        throw "";
+    }
+    return *static_cast<int*>(data);
+}
+Any::operator double() {
+    if (type != Type::DOUBLE) {
+        throw "";
+    }
+    return *static_cast<double*>(data);
+}
+Any::operator std::string() {
+    if (type != Type::STRING) {
+        throw "";
+    }
+    return *static_cast<std::string*>(data);
+}
+Any::operator std::vector<Any*>*() {
+    if (type != Type::VECTOR_ANY_PTR) {
+        throw "";
+    }
+    return static_cast<std::vector<Any*>*>(data);
+}
+std::ostream& operator<<(std::ostream& out, const Any& val) {
+    if (val.type == Any::Type::VECTOR_ANY_PTR) {
+        auto realPtr = static_cast<std::vector<Any*>*>(val.data);
+        for (auto &it : *realPtr) {
+            out << *it << " ";
+        }
+    } else if (val.type == Any::Type::INT) {
+        int* realPtr = static_cast<int*>(val.data);
+        out << *realPtr;
+    } else if (val.type == Any::Type::DOUBLE) {
+        double* realPtr = static_cast<double*>(val.data);
+        out << *realPtr;
+    } else if (val.type == Any::Type::STRING) {
+        std::string* realPtr = static_cast<std::string*>(val.data);
+        out << *realPtr;
+    }
+    return out;
+}
+// Конец вставленного кода

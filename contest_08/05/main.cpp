@@ -1,91 +1,80 @@
-
 #include <iostream>
-#include <vector>
-
-class IComparator{
-public:
-    virtual bool compare(int a, int b) const = 0;
-};
-
-bool less(int a, int b){
-    return a < b;
-}
-
-void greater(int a, int b, bool& verdict){
-    verdict = a > b;
-}
-
-double key_func(int value){
-    return abs(value);
-}
-
-class LessAdapter: public IComparator{
-    using func = bool (*)(int a, int b);
-    func cmp;
-public:
-    LessAdapter(func cmp): cmp(cmp){
-    }
-    
-    bool compare(int a, int b) const override {
-        return cmp(a, b);
-    }
-};
 
 // Начало вставленного кода
-class GreaterAdapter: public IComparator{
-    using func = void (*)(int a, int b, bool& verdict);
-    func cmp;
+class IntSharedPointer {
+private:
+    int* refs;
+    int* p;
+    void decreaseRefs() {
+        (*refs)--;
+        if (*refs == 0) {
+            delete p;
+            delete refs;
+        }
+    }
+    void copyRefs(const IntSharedPointer& b) {
+        p = b.p;
+        refs = b.refs;
+        (*refs)++;
+    }
 public:
-    GreaterAdapter(func cmp): cmp(cmp){
+    IntSharedPointer(int* pointer) {
+        refs = new int{1};
+        p = pointer;
     }
-    
-    bool compare(int a, int b) const override {
-        bool res;
-        cmp(a, b, res);
-        return res;
+    IntSharedPointer(IntSharedPointer& b) {
+        copyRefs(b);
     }
-};
-
-class KeyFuncLessAdapter: public IComparator{
-    using func = double (*)(int value);
-    func key_func;
-public:
-    KeyFuncLessAdapter(func key_func): key_func(key_func){
+    ~IntSharedPointer() {
+        decreaseRefs();
     }
-    
-    bool compare(int a, int b) const override {
-        return key_func(a) < key_func(b);
+    int& operator*() {
+        return *p;
+    }
+    IntSharedPointer& operator=(const IntSharedPointer& b) {
+        if (this == &b) {
+            return *this;
+        }
+        decreaseRefs();
+        copyRefs(b);
+        return *this;
     }
 };
 // Конец вставленного кода
 
-void bubbleSort(std::vector<int>& arr, const IComparator& comp) {
-    for (int i = 0; i < arr.size() - 1; i++)
-        for (int j = 0; j < arr.size() - i - 1; j++)
-            if (comp.compare(arr[j], arr[j + 1]))
-                std::swap(arr[j], arr[j+1]);
+void print(IntSharedPointer p){
+    std::cout << *p << std::endl;
+}
+
+void print_with_exception(IntSharedPointer p){
+    std::cout << *p << std::endl;
+    if (*p % 2) throw std::string("error");
 }
 
 int main(){
-    int size;
-    std::cin >> size;
-    std::vector<int> arr(size);
-    for(auto& i : arr) std::cin >> i;
+    IntSharedPointer p(new int);
+    std::cin >> *p;
+    p = p;
+    print(p);
+
+    IntSharedPointer p2(p);
+    std::cin >> *p2;
+    print(p);
+    print(p2);
     
-    bubbleSort(arr, LessAdapter(less));
-    for(auto i : arr) std::cout << i << ' ';
-    std::cout << std::endl;
+    {
+        int value;
+        std::cin >> value;
+        IntSharedPointer p3(new int(value));
+        p2 = p3;
+    }
+    print(p2);
     
-    bubbleSort(arr, GreaterAdapter(greater));
-    for(auto i : arr) std::cout << i << ' ';
-    std::cout << std::endl;
-    
-    bubbleSort(arr, KeyFuncLessAdapter(key_func));
-    for(auto i : arr) std::cout << i << ' ';
-    std::cout << std::endl;
-    
-    bubbleSort(arr, KeyFuncLessAdapter([](int value)->double{
-        return abs(value) % 2;
-    }));
-    for(auto i : arr) std::cout << i << ' ';
+    p = p2;
+    try{
+        print_with_exception(p);
+    }
+    catch (const std::string& e) {
+        std::cout << e << std::endl;
+    }
 }
