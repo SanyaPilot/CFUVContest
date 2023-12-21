@@ -87,3 +87,7 @@
 | [7. Адаптер функций](./contest_08/07/main.cpp)                 | ![](./img/cpp.png) |
 | [8. Стратегия печати](./contest_08/08/main.cpp)                | ![](./img/cpp.png) |
 | [9. Композит](./contest_08/09/main.cpp)                        | ![](./img/cpp.png) |
+| [10. Какой тип](./contest_08/10/main.go)                       | ![](./img/go.png)  |
+| [11. Класс. Матрица](./contest_08/11/main.go)                  | ![](./img/go.png)  |
+| [12. Класс. Стек](./contest_08/12/main.go)                     | ![](./img/go.png)  |
+| [13. Pizza Builder](./contest_08/13/main.go)                   | ![](./img/go.png)  |
